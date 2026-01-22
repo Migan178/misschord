@@ -6,6 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Root(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, map[string]string{"Hello": "World!"})
+func Root(c *gin.Context) {
+	c.JSON(http.StatusOK, map[string]string{"Hello": "World!"})
 }

@@ -16,8 +16,8 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func WSRoot(ctx *gin.Context) {
-	ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+func WSRoot(c *gin.Context) {
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		fmt.Println(err)
 	}

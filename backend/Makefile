@@ -9,15 +9,15 @@ endif
 BIN := $(BIN_DIR)/$(APP_NAME)$(EXT)
 PKG := ./cmd/server
 
-.PHONY: all build run fmt vet deps
+.PHONY: all build run fmt vet deps generate
 
 all: build
 
-build:
+build: generate
 	@mkdir -p $(BIN_DIR)
 	@go build -o $(BIN) $(PKG)
 
-run:
+run: generate
 	@go run $(PKG)
 
 clean:
@@ -31,3 +31,6 @@ fmt:
 
 vet:
 	@go vet $(PKG)
+
+generate:
+	@go generate ./internal/repository/ent/...
