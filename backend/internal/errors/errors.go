@@ -3,5 +3,6 @@ package errors
 import "fmt"
 
 var (
-	DuplicatedUniqueValueErr = fmt.Errorf("duplicated value")
+	ErrDuplicatedUniqueValue = fmt.Errorf("duplicated value")
+	ErrInternalServer        = fmt.Errorf("an error occurred")
 )

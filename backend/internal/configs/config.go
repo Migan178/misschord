@@ -23,7 +23,8 @@ type databaseConfig struct {
 }
 
 type backendConfig struct {
-	Port int
+	Port    int
+	AuthKey string
 }
 
 var instance *Config
@@ -69,7 +70,8 @@ func GetConfig() *Config {
 				Name:     getRequiredValue("DATABASE_NAME"),
 			},
 			Backend: backendConfig{
-				Port: getValueToInt("BACKEND_PORT"),
+				Port:    getValueToInt("BACKEND_PORT"),
+				AuthKey: getRequiredValue("BACKEND_AUTH_KEY"),
 			},
 		}
 

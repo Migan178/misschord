@@ -3,10 +3,12 @@ package repository
 import (
 	"context"
 	"errors"
-	"time"
 
 	customErrors "github.com/Migan178/misschord-backend/internal/errors"
+	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository/ent"
+	"github.com/Migan178/misschord-backend/internal/repository/ent/user"
+	jwt "github.com/appleboy/gin-jwt/v3"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -18,35 +20,13 @@ func newUserRepository(client *ent.Client) *UserRepository {
 	return &UserRepository{client}
 }
 
-type CreateUserRequest struct {
-	Handle         string `json:"handle" binding:"required,min=4,max=16"`
-	Email          string `json:"email" binding:"required,email"`
-	Password       string `json:"password" binding:"required"`
-	PasswordCheck  string `json:"password_check" binding:"required,eqfield=Password"`
-	hashedPassword string `json:"-"`
-}
-
-type User struct {
-	ID      int    `json:"id"`
-	Profile string `json:"profile"`
-
-	// Unique
-	Handle string `json:"handle"`
-	// Unique
-	Email string `json:"-"`
-
-	HashedPassword string    `json:"-"`
-	Description    *string   `json:"description"`
-	CreatedAt      time.Time `json:"created_at"`
-}
-
-func (c *UserRepository) Create(ctx context.Context, data CreateUserRequest) (*ent.User, error) {
+func (r *UserRepository) Create(ctx context.Context, data models.CreateUserRequest) (*ent.User, error) {
 	hashedPassword, err := HashPassword(data.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := c.client.User.Create().
+	user, err := r.client.User.Create().
 		SetHandle(data.Handle).
 		SetEmail(data.Email).
 		SetHashedPassword(hashedPassword).
@@ -56,9 +36,24 @@ func (c *UserRepository) Create(ctx context.Context, data CreateUserRequest) (*e
 
 		if errors.As(err, &mysqlErr) {
 			if mysqlErr.Number == 1062 {
-				return nil, customErrors.DuplicatedUniqueValueErr
+				return nil, customErrors.ErrDuplicatedUniqueValue
 			}
 		}
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*ent.User, error) {
+	user, err := r.client.User.Query().
+		Where(user.Email(email)).
+		Only(ctx)
+	if err != nil {
+		if _, ok := err.(*ent.NotFoundError); ok {
+			return nil, jwt.ErrFailedAuthentication
+		}
+
 		return nil, err
 	}
 

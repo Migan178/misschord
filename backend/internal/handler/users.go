@@ -3,46 +3,65 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/Migan178/misschord-backend/internal/errors"
+	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository"
+	jwt "github.com/appleboy/gin-jwt/v3"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
 
-func CreateUser(c *gin.Context) {
-	var createData repository.CreateUserRequest
+func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var createData models.CreateUserRequest
 
-	if err := c.ShouldBind(&createData); err != nil {
-		if errs, ok := err.(validator.ValidationErrors); ok {
-			msgs := make(map[string]string)
+		if err := c.ShouldBindJSON(&createData); err != nil {
+			if errs, ok := err.(validator.ValidationErrors); ok {
+				msgs := make(map[string]string)
 
-			for _, err := range errs {
-				msgs[err.Field()] = GetErrorMessage(err)
+				for _, err := range errs {
+					msgs[err.Field()] = errors.GetErrorMessage(err)
+				}
+
+				c.JSON(http.StatusBadRequest, gin.H{"errors": msgs})
+				return
 			}
 
-			c.JSON(http.StatusBadRequest, gin.H{"errors": msgs})
+			fmt.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "an error occurred"})
 			return
 		}
 
-		fmt.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "an error occurred"})
-		return
-	}
+		user, err := repository.GetDatabase().Users.Create(c.Request.Context(), createData)
+		if err != nil {
+			if err == errors.ErrDuplicatedUniqueValue {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
 
-	user, err := repository.GetDatabase().Users.Create(c.Request.Context(), createData)
-	if err != nil {
-		if err == errors.DuplicatedUniqueValueErr {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			fmt.Println(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "an error occurred"})
 			return
 		}
 
-		fmt.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "an error occurred"})
-		return
-	}
+		token, err := authMiddleware.TokenGenerator(c.Request.Context(), &models.UserToken{
+			ID:    strconv.Itoa(user.ID),
+			Email: user.Email,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "an error occurred in generating token. but user is created."})
+			return
+		}
 
-	c.JSON(http.StatusCreated, user)
+		c.JSON(http.StatusCreated, gin.H{
+			"message":       "create user and login user is success",
+			"token":         token.AccessToken,
+			"refresh_token": token.RefreshToken,
+			"expire":        token.ExpiresAt,
+		})
+	}
 }
 
 func GetUser(c *gin.Context) {}
