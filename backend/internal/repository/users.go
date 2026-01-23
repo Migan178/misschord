@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	customErrors "github.com/Migan178/misschord-backend/internal/errors"
 	"github.com/Migan178/misschord-backend/internal/models"
@@ -39,6 +40,20 @@ func (r *UserRepository) Create(ctx context.Context, data models.CreateUserReque
 				return nil, customErrors.ErrDuplicatedUniqueValue
 			}
 		}
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *UserRepository) Get(ctx context.Context, id int) (*ent.User, error) {
+	user, err := r.client.User.Get(ctx, id)
+	if err != nil {
+		fmt.Printf("%+v\n", err)
+		if _, ok := err.(*ent.NotFoundError); ok {
+			return nil, customErrors.ErrNoUser
+		}
+
 		return nil, err
 	}
 

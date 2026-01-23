@@ -12,4 +12,10 @@ func setupUsers(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 		public.POST("/", handler.CreateUser(authMiddleware))
 		public.POST("/login", authMiddleware.LoginHandler)
 	}
+
+	private := rg.Group("/users")
+	private.Use(authMiddleware.MiddlewareFunc())
+	{
+		private.GET("/me", handler.Me)
+	}
 }

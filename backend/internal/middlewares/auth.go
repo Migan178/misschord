@@ -28,7 +28,7 @@ func NewAuthMiddleware() (*ginJWT.GinJWTMiddleware, error) {
 		CookieHTTPOnly: true,
 		CookieName:     "token_jwt",
 		CookieSameSite: http.SameSiteLaxMode,
-		TokenLookup:    "cookie:token_jwt",
+		TokenLookup:    "header:Authorization, cookie:token_jwt",
 
 		PayloadFunc:     payloadFunc,
 		IdentityHandler: identityHandler,
@@ -52,10 +52,7 @@ func payloadFunc(data any) jwt.MapClaims {
 func identityHandler(c *gin.Context) any {
 	claims := ginJWT.ExtractClaims(c)
 
-	return &models.UserToken{
-		ID:    claims["id"].(string),
-		Email: claims["email"].(string),
-	}
+	return claims["id"].(string)
 }
 
 func authenticator(c *gin.Context) (any, error) {

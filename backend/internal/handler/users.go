@@ -66,6 +66,34 @@ func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
 
 func GetUser(c *gin.Context) {}
 
+func Me(c *gin.Context) {
+	userID, err := strconv.Atoi(jwt.ExtractClaims(c)["id"].(string))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user id",
+		})
+		return
+	}
+
+	user, err := repository.GetDatabase().Users.Get(c.Request.Context(), userID)
+	if err != nil {
+		if err == errors.ErrNoUser {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "an error occurred",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
 func UpdateUser(c *gin.Context) {}
 
 func DeleteUser(c *gin.Context) {}
