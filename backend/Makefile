@@ -7,7 +7,7 @@ ifeq ($(OS),Windows_NT)
 endif
 
 BIN := $(BIN_DIR)/$(APP_NAME)$(EXT)
-PKG := ./cmd/server
+PKG := ./internal/cmd/server
 
 .PHONY: all build run fmt vet deps generate
 
