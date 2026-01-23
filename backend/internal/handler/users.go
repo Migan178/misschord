@@ -55,6 +55,8 @@ func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
 			return
 		}
 
+		authMiddleware.SetCookie(c, token.AccessToken)
+
 		c.JSON(http.StatusCreated, gin.H{
 			"message":       "create user and login user is success",
 			"token":         token.AccessToken,
