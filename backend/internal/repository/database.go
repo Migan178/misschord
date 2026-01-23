@@ -12,7 +12,7 @@ import (
 )
 
 type Database struct {
-	Client *ent.Client
+	client *ent.Client
 	Users  *UserRepository
 }
 
@@ -38,7 +38,7 @@ func GetDatabase() *Database {
 		}
 
 		instance = &Database{
-			Client: client,
+			client: client,
 			Users:  newUserRepository(client),
 		}
 	})

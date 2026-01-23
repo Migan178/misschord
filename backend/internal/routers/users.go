@@ -17,5 +17,6 @@ func setupUsers(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 	private.Use(authMiddleware.MiddlewareFunc())
 	{
 		private.GET("/me", handler.Me)
+		private.GET("/:id", handler.GetUser)
 	}
 }
