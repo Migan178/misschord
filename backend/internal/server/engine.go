@@ -27,7 +27,7 @@ func GetEngine() *gin.Engine {
 		}
 
 		config := cors.DefaultConfig()
-		config.AllowOrigins = []string{"http://localhost:3000"}
+		config.AllowOrigins = []string{"http://localhost:5173"}
 		config.AllowCredentials = true
 
 		instance.Use(cors.New(config))

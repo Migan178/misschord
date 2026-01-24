@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -101,6 +102,15 @@ func authorizer(c *gin.Context, data any) bool {
 }
 
 func unauthorized(c *gin.Context, code int, message string) {
+	fmt.Println(message)
+
+	if message == ginJWT.ErrEmptyAuthHeader.Error() || message == ginJWT.ErrEmptyCookieToken.Error() {
+		c.JSON(code, gin.H{
+			"error": "token is invalid",
+		})
+		return
+	}
+
 	if message == errors.ErrInternalServer.Error() {
 		code = http.StatusInternalServerError
 	}

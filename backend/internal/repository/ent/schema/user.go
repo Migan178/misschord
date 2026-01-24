@@ -20,7 +20,7 @@ func (User) Fields() []ent.Field {
 		field.String("email").Unique().Sensitive(),
 		field.String("hashed_password").Sensitive(),
 		field.String("description").Optional().Nillable(),
-		field.Time("created_at").Default(time.Now),
+		field.Time("created_at").Default(time.Now).StructTag(`json:"createdAt"`),
 	}
 }
 

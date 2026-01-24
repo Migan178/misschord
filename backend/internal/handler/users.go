@@ -59,10 +59,10 @@ func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
 		authMiddleware.SetRefreshTokenCookie(c, token.RefreshToken)
 
 		c.JSON(http.StatusCreated, gin.H{
-			"message":       "create user and login user is success",
-			"token":         token.AccessToken,
-			"refresh_token": token.RefreshToken,
-			"expire":        token.ExpiresAt,
+			"message":      "create user and login user is success",
+			"token":        token.AccessToken,
+			"refreshToken": token.RefreshToken,
+			"expiresAt":    token.ExpiresAt,
 		})
 	}
 }
