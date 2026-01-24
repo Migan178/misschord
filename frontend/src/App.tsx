@@ -1,60 +1,45 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Link } from "react-router";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import api from "./api/axios";
+import PrivateLayout from "./components/layouts/PrivateLayout";
+import PublicLayout from "./components/layouts/PublicLayout";
+import type { UserResponse } from "./models/user";
+import Asdf from "./routes/Asdf";
+import Login from "./routes/Login";
+import Root from "./routes/Root";
+import useUserDataStore from "./stores/userData";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router";
 
 export default function App() {
-	const websocketServerUrl = "ws://localhost:8080/ws";
-
-	const { sendMessage, lastMessage, readyState } = useWebSocket(
-		websocketServerUrl,
-		{
-			shouldReconnect: () => true,
-			onOpen: () => console.log("connected"),
-			onError: console.error,
-		},
-	);
-
-	const [messages, setMessages] = useState<string[]>([]);
-	const inputRef = useRef<HTMLInputElement>(null);
-
-	const connectionStatus = {
-		[ReadyState.CONNECTING]: "연결 중",
-		[ReadyState.OPEN]: "연결 됨",
-		[ReadyState.CLOSING]: "연결 해제 중",
-		[ReadyState.CLOSED]: "연결 해제 됨",
-		[ReadyState.UNINSTANTIATED]: "인스턴스화 안 됨",
-	}[readyState];
+	const setHandle = useUserDataStore(state => state.setHandle);
+	const setProfile = useUserDataStore(state => state.setProfile);
+	const setState = useUserDataStore(state => state.setState);
 
 	useEffect(() => {
-		if (lastMessage)
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			setMessages(prev => [...prev, lastMessage.data]);
-	}, [lastMessage]);
+		(async () => {
+			try {
+				const res = await api.get<UserResponse>("/users/me");
 
-	function handleSubmit(e: FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-
-		sendMessage(inputRef.current!.value);
-	}
+				setHandle(res.data.handle);
+				setProfile(res.data.profile);
+				setState("authorized");
+			} catch (err) {
+				console.error(err);
+				setState("unauthorized");
+			}
+		})();
+	}, [setHandle, setProfile, setState]);
 
 	return (
-		<div>
-			<h1 className="font-bold text-2xl">Hello, World!</h1>
-			<Link to="/asdf">test react router</Link>
-			<hr />
-			<h1>WEBSOCKET TEST</h1>
-			<p>{connectionStatus}</p>
-			<ul>
-				{messages.map(msg => (
-					<li key={msg}>
-						<p>{msg}</p>
-					</li>
-				))}
-			</ul>
-			<form onSubmit={handleSubmit}>
-				<input type="text" ref={inputRef} required />
-				<input type="submit" value="보내기" />
-			</form>
-		</div>
+		<BrowserRouter>
+			<Routes>
+				<Route element={<PrivateLayout />}>
+					<Route path="/" element={<Root />} />
+				</Route>
+				<Route element={<PublicLayout />}>
+					<Route path="/login" element={<Login />} />
+				</Route>
+				<Route path="/asdf" element={<Asdf />} />
+			</Routes>
+		</BrowserRouter>
 	);
 }
