@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Migan178/misschord-backend/internal/chat"
 	"github.com/Migan178/misschord-backend/internal/middlewares"
 	"github.com/Migan178/misschord-backend/internal/routers"
 	"github.com/gin-contrib/cors"
@@ -22,6 +23,8 @@ func GetEngine() *gin.Engine {
 			panic(err)
 		}
 
+		hub := chat.NewHub(authMiddleware)
+
 		if err = authMiddleware.MiddlewareInit(); err != nil {
 			panic(err)
 		}
@@ -33,7 +36,9 @@ func GetEngine() *gin.Engine {
 		instance.Use(cors.New(config))
 		instance.Use(middlewares.TimeoutMiddleWare(time.Second * 5))
 
-		routers.SetupRouter(instance, authMiddleware)
+		routers.SetupRouter(instance, authMiddleware, hub)
+
+		go hub.Run()
 	})
 
 	return instance
