@@ -1,44 +1,55 @@
-import useUserDataStore from "../stores/userData";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useSocket } from "../contexts/socket";
+import { OPCode } from "../models/websocket/data";
+import { EventType, isMessageCreate } from "../models/websocket/events";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import useWebSocket, { ReadyState } from "react-use-websocket";
 
 export default function Root() {
-	const websocketServerUrl = "ws://localhost:8080/v1/ws";
-
-	const { sendMessage, lastMessage, readyState } = useWebSocket(
-		websocketServerUrl,
-		{
-			shouldReconnect: () => true,
-			onOpen: () => console.log("connected"),
-			onError: console.error,
-		},
-	);
-
-	const state = useUserDataStore(state => state.state);
+	const { sendMessage, lastMessage, connectionStatus } = useSocket();
 
 	const [messages, setMessages] = useState<string[]>([]);
-	const inputRef = useRef<HTMLInputElement>(null);
+	const [channel, setChannel] = useState("");
 
-	const connectionStatus = {
-		[ReadyState.CONNECTING]: "연결 중",
-		[ReadyState.OPEN]: "연결 됨",
-		[ReadyState.CLOSING]: "연결 해제 중",
-		[ReadyState.CLOSED]: "연결 해제 됨",
-		[ReadyState.UNINSTANTIATED]: "인스턴스화 안 됨",
-	}[readyState];
+	function handleSendMessage(data: FormData) {
+		sendMessage(
+			JSON.stringify({
+				op: OPCode.Dispatch,
+				data: {
+					message: data.get("text"),
+					channel: {
+						id: channel,
+						type: "DM",
+					},
+				},
+				type: EventType.MessageCreate,
+			}),
+		);
+	}
+
+	function handleSetChannel(data: FormData) {
+		setChannel(data.get("id")!.toString());
+
+		sendMessage(
+			JSON.stringify({
+				op: 0,
+				data: {
+					id: channel,
+					type: "DM",
+				},
+				type: EventType.ChannelJoin,
+			}),
+		);
+	}
 
 	useEffect(() => {
-		if (lastMessage)
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			setMessages(prev => [...prev, lastMessage.data]);
+		console.log(lastMessage);
+		if (!lastMessage || !isMessageCreate(lastMessage)) return;
+		// eslint-disable-next-line react-hooks/set-state-in-effect
+		setMessages(prev => [
+			...prev,
+			`${lastMessage.data.author.handle}: ${lastMessage.data.message}`,
+		]);
 	}, [lastMessage]);
-
-	function handleSubmit(e: FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-
-		sendMessage(inputRef.current!.value);
-	}
 
 	return (
 		<div>
@@ -47,16 +58,19 @@ export default function Root() {
 			<hr />
 			<h1>WEBSOCKET TEST</h1>
 			<p>{connectionStatus}</p>
-			<p>{state}</p>
 			<ul>
 				{messages.map(msg => (
-					<li key={msg}>
+					<li>
 						<p>{msg}</p>
 					</li>
 				))}
 			</ul>
-			<form onSubmit={handleSubmit}>
-				<input type="text" ref={inputRef} required />
+			<form action={handleSetChannel}>
+				<input type="text" name="id" required />
+				<input type="submit" value="채널 설정" />
+			</form>
+			<form action={handleSendMessage}>
+				<input type="text" name="text" required />
 				<input type="submit" value="보내기" />
 			</form>
 		</div>

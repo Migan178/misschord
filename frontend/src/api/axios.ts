@@ -1,5 +1,6 @@
 import type { ErrorResponse } from "../models/errors";
-import axios, { type AxiosError } from "axios";
+import axios from "axios";
+import createAuthRefreshInterceptor from "axios-auth-refresh";
 
 const api = axios.create({
 	baseURL: import.meta.env.VITE_BACKEND_URL,
@@ -10,48 +11,18 @@ const api = axios.create({
 	},
 });
 
-api.interceptors.response.use(
-	response => {
-		if (response.data.createdAt) {
-			response.data.createdAt = new Date(response.data.createdAt);
-		}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function refreshToken(_failedRequest: unknown) {
+	return api
+		.post("/users/refresh")
+		.then(Promise.resolve)
+		.catch(Promise.reject);
+}
 
-		if (response.data.expiresAt) {
-			response.data.expiresAt = new Date(response.data.expireAt);
-		}
-
-		return response;
-	},
-	async (error: AxiosError) => {
-		const originalReq = error.config;
-		if (!originalReq) return Promise.reject(error);
-
-		if (error.response) {
-			if (
-				error.response.status === 401 &&
-				typeof error.response.data === "object"
-			) {
-				const data = error.response.data as ErrorResponse;
-
-				if (data.error === "token is invalid") {
-					window.location.href = "/login";
-					return;
-				}
-
-				try {
-					await api.post("/users/refresh");
-
-					return api(originalReq);
-				} catch (err) {
-					console.error(err);
-
-					window.location.href = "/login";
-				}
-			}
-		}
-
-		return Promise.reject(error);
-	},
-);
+createAuthRefreshInterceptor(api, refreshToken, {
+	shouldRefresh: err =>
+		err.response?.status == 401 &&
+		(err.response?.data as ErrorResponse).error === "token is expired",
+});
 
 export default api;

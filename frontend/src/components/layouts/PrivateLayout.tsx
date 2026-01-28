@@ -1,3 +1,4 @@
+import SocketProvider from "../../contexts/SocketProvider";
 import useUserDataStore from "../../stores/userData";
 import { Navigate, Outlet } from "react-router";
 
@@ -8,5 +9,9 @@ export default function PrivateLayout() {
 
 	if (state === "unauthorized") return <Navigate to="/login" replace />;
 
-	return <Outlet />;
+	return (
+		<SocketProvider>
+			<Outlet />
+		</SocketProvider>
+	);
 }
