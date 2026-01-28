@@ -31,7 +31,7 @@ func ServeWS(hub *chat.Hub, authMiddleware *jwt.GinJWTMiddleware, w http.Respons
 			goto Upgrade
 		}
 
-		token, err := authMiddleware.ParseTokenString(tokenCookie.String())
+		token, err := authMiddleware.ParseTokenString(tokenCookie.Value)
 		if err != nil {
 			goto Upgrade
 		}
