@@ -22,10 +22,10 @@ func getDmID(id1, id2 int) string {
 	return fmt.Sprintf("%d:%d", id2, id1)
 }
 
-func (c *Client) handleChannelEvent(messageData *models.WebSocketData) error {
+func (c *Client) handleChannelEvent(message *models.WebSocketData) error {
 	var data models.ChannelData
 
-	if err := json.Unmarshal(*messageData.Data, &data); err != nil {
+	if err := json.Unmarshal(*message.Data, &data); err != nil {
 		return customErrors.GetUnmarshalError(err)
 	}
 
@@ -80,12 +80,21 @@ func (c *Client) handleChannelEvent(messageData *models.WebSocketData) error {
 		}
 	}
 
-	select {
-	case c.hub.join <- joinOrLeaveData{c, roomID}:
-		c.currentRoomID = roomID
-		c.parseDataAndSend(messageData, models.ChannelData{ID: data.ID, ChannelType: data.ChannelType})
-	case <-time.After(writeWait + 5*time.Second):
-		return customErrors.ErrFailedToSend
+	switch message.Type {
+	case models.EventTypeChannelJoin:
+		select {
+		case c.hub.join <- joinOrLeaveData{c, roomID}:
+			c.parseDataAndSend(message, data)
+		case <-time.After(writeWait + 5*time.Second):
+			return customErrors.ErrFailedToSend
+		}
+	case models.EventTypeChannelLeave:
+		select {
+		case c.hub.leave <- joinOrLeaveData{c, roomID}:
+			c.parseDataAndSend(message, data)
+		case <-time.After(writeWait + 5*time.Second):
+			return customErrors.ErrFailedToSend
+		}
 	}
 
 	return nil

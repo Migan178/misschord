@@ -53,6 +53,7 @@ func (h *Hub) Run() {
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
+				h.leave <- joinOrLeaveData{client, client.currentRoomID}
 				client.disconnect()
 			}
 		case data := <-h.broadcast:
@@ -65,16 +66,11 @@ func (h *Hub) Run() {
 				}
 			}
 		case data := <-h.join:
-			if room, ok := h.rooms[data.roomID]; ok {
-				if _, ok := room[data.client]; ok {
-					continue
-				}
-
-				room[data.client] = true
-				continue
+			if h.rooms[data.roomID] == nil {
+				h.rooms[data.roomID] = make(map[*Client]bool)
 			}
 
-			h.rooms[data.roomID] = make(map[*Client]bool)
+			data.client.currentRoomID = data.roomID
 			h.rooms[data.roomID][data.client] = true
 		case data := <-h.leave:
 			if room, ok := h.rooms[data.roomID]; ok {
