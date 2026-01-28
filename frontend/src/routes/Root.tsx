@@ -1,6 +1,10 @@
 import { useSocket } from "../contexts/socket";
 import { OPCode } from "../models/websocket/data";
-import { EventType, isMessageCreate } from "../models/websocket/events";
+import {
+	ChannelType,
+	EventType,
+	isMessageCreate,
+} from "../models/websocket/events";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
@@ -27,14 +31,26 @@ export default function Root() {
 	}
 
 	function handleSetChannel(data: FormData) {
+		if (channel)
+			sendMessage(
+				JSON.stringify({
+					op: OPCode.Dispatch,
+					data: {
+						id: channel,
+						type: ChannelType.DM,
+					},
+					type: EventType.ChannelLeave,
+				}),
+			);
+
 		setChannel(data.get("id")!.toString());
 
 		sendMessage(
 			JSON.stringify({
-				op: 0,
+				op: OPCode.Dispatch,
 				data: {
 					id: channel,
-					type: "DM",
+					type: ChannelType.DM,
 				},
 				type: EventType.ChannelJoin,
 			}),
@@ -66,7 +82,7 @@ export default function Root() {
 				))}
 			</ul>
 			<form action={handleSetChannel}>
-				<input type="text" name="id" required />
+				<input type="number" name="id" required />
 				<input type="submit" value="채널 설정" />
 			</form>
 			<form action={handleSendMessage}>
