@@ -53,7 +53,7 @@ func (h *Hub) Run() {
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
-				close(client.send)
+				client.disconnect()
 			}
 		case data := <-h.broadcast:
 			switch data.message.Type {

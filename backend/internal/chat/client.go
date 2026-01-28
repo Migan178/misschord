@@ -2,6 +2,7 @@ package chat
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/Migan178/misschord-backend/internal/models"
@@ -15,6 +16,8 @@ type Client struct {
 	user          *ent.User
 	send          chan models.WebSocketData
 	currentRoomID string
+	closeOnce     *sync.Once
+	quit          chan any
 }
 
 const (
@@ -24,7 +27,7 @@ const (
 )
 
 func NewClient(hub *Hub, user *ent.User, conn *websocket.Conn) *Client {
-	client := &Client{hub, conn, user, make(chan models.WebSocketData, 512), ""}
+	client := &Client{hub, conn, user, make(chan models.WebSocketData, 512), "", &sync.Once{}, make(chan any)}
 
 	hub.register <- client
 
@@ -52,4 +55,10 @@ func (c *Client) Start() {
 	}
 
 	c.readPump()
+}
+
+func (c *Client) disconnect() {
+	c.closeOnce.Do(func() {
+		close(c.quit)
+	})
 }

@@ -11,11 +11,16 @@ import (
 func (c *Client) writePump() {
 	defer c.conn.Close()
 
-	for message := range c.send {
-		c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+	for {
+		select {
+		case message := <-c.send:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 
-		if err := c.conn.WriteJSON(message); err != nil {
-			fmt.Printf("write to client err: %v\n", err)
+			if err := c.conn.WriteJSON(message); err != nil {
+				fmt.Printf("write to client err: %v\n", err)
+				return
+			}
+		case <-c.quit:
 			return
 		}
 	}
@@ -34,6 +39,8 @@ func (c *Client) parseDataAndSend(message *models.WebSocketData, data any) {
 func (c *Client) safeSend(message *models.WebSocketData) {
 	select {
 	case c.send <- *message:
+		return
+	case <-c.quit:
 		return
 	case <-time.After(writeWait):
 		c.hub.unregister <- c
