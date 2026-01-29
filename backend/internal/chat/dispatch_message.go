@@ -1,12 +1,13 @@
 package chat
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
-	"time"
 
 	customErrors "github.com/Migan178/misschord-backend/internal/errors"
 	"github.com/Migan178/misschord-backend/internal/models"
+	"github.com/Migan178/misschord-backend/internal/repository"
 )
 
 func (c *Client) handleMessageCreateEvent(message *models.WebSocketData) error {
@@ -16,8 +17,6 @@ func (c *Client) handleMessageCreateEvent(message *models.WebSocketData) error {
 		return customErrors.GetUnmarshalError(err)
 	}
 
-	now := time.Now()
-	data.CreatedAt = &now
 	data.Author = c.user
 
 	switch data.Channel.ChannelType {
@@ -38,6 +37,17 @@ func (c *Client) handleMessageCreateEvent(message *models.WebSocketData) error {
 			Message: "user is not in the channel",
 		}
 	}
+
+	createdMessage, err := repository.GetDatabase().Messages.Create(context.Background(), data)
+	if err != nil {
+		return &customErrors.APIError{
+			Code:    customErrors.ErrorCodeInternalError,
+			Message: customErrors.ErrorMessageInternalDBError,
+		}
+	}
+
+	data.ID = &createdMessage.ID
+	data.CreatedAt = &createdMessage.CreatedAt
 
 	c.hub.parseDataAndBroadcast(message, &data)
 	return nil

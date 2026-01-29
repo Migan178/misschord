@@ -21,6 +21,7 @@ const (
 )
 
 type MessageCreateEvent struct {
+	ID        *int        `json:"id"`
 	Author    *ent.User   `json:"author"`
 	Message   string      `json:"message"`
 	Channel   ChannelData `json:"channel"`
