@@ -3,7 +3,7 @@ import axios from "axios";
 import createAuthRefreshInterceptor from "axios-auth-refresh";
 
 const api = axios.create({
-	baseURL: import.meta.env.VITE_BACKEND_URL,
+	baseURL: "/api/v1",
 	timeout: 5_000,
 	withCredentials: true,
 	headers: {
