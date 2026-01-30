@@ -5,13 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	customErrors "github.com/Migan178/misschord-backend/internal/errors"
 	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository"
-	"github.com/Migan178/misschord-backend/internal/repository/ent"
 	"github.com/Migan178/misschord-backend/internal/repository/ent/room"
 )
 
@@ -22,7 +20,7 @@ func (c *Client) handleChannelEvent(message *models.WebSocketData) error {
 		return customErrors.GetUnmarshalError(err)
 	}
 
-	if data.ID == fmt.Sprintf("%d", c.user.ID) {
+	if data.ID == c.user.ID {
 		return &customErrors.APIError{
 			Code:    customErrors.ErrorCodeInvalidValue,
 			Message: customErrors.ErrorMessageChannelIDIsInvalid,
@@ -36,27 +34,19 @@ func (c *Client) handleChannelEvent(message *models.WebSocketData) error {
 		}
 	}
 
-	channelIDInt, err := strconv.Atoi(data.ID)
-	if err != nil {
-		return &customErrors.APIError{
-			Code:    customErrors.ErrorCodeSyntaxError,
-			Message: "failed to convert to int",
-		}
-	}
-
-	var roomID string
+	var roomID int
 
 	switch data.RoomType {
 	case room.RoomTypeDM:
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		targetUser, err := repository.GetDatabase().Users.Get(ctx, channelIDInt)
+		room, err := repository.GetDatabase().Rooms.GetDM(ctx, repository.GetDmID(c.user.ID, data.ID))
 		if err != nil {
-			if errors.As(err, new(*ent.NotFoundError)) {
+			if errors.Is(err, customErrors.ErrNoUser) {
 				return &customErrors.APIError{
 					Code:    customErrors.ErrorCodeNotfound,
-					Message: fmt.Sprintf("user %d is not found", channelIDInt),
+					Message: fmt.Sprintf("user %d is not found", data.ID),
 				}
 			}
 
@@ -66,7 +56,7 @@ func (c *Client) handleChannelEvent(message *models.WebSocketData) error {
 			}
 		}
 
-		roomID = repository.GetDmID(c.user.ID, targetUser.ID)
+		roomID = room.ID
 	}
 
 	switch message.Type {

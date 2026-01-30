@@ -15,7 +15,7 @@ type Client struct {
 	conn          *websocket.Conn
 	user          *ent.User
 	send          chan models.WebSocketData
-	currentRoomID string
+	currentRoomID int
 	closeOnce     *sync.Once
 	quit          chan any
 }
@@ -27,7 +27,7 @@ const (
 )
 
 func NewClient(hub *Hub, user *ent.User, conn *websocket.Conn) *Client {
-	client := &Client{hub, conn, user, make(chan models.WebSocketData, 512), "", &sync.Once{}, make(chan any)}
+	client := &Client{hub, conn, user, make(chan models.WebSocketData, 512), 0, &sync.Once{}, make(chan any)}
 
 	hub.register <- client
 

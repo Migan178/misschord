@@ -16,19 +16,18 @@ const (
 )
 
 type MessageCreateEvent struct {
-	ID        *string     `json:"id"`
+	ID        *int        `json:"id"`
 	Author    *ent.User   `json:"author"`
 	Message   string      `json:"message"`
 	Channel   ChannelData `json:"channel"`
 	CreatedAt *time.Time  `json:"createdAt"`
 }
 
-func (m *MessageCreateEvent) GetInternalRoomID() string {
-	return m.Channel.DmKey
+func (m *MessageCreateEvent) GetInternalRoomID() int {
+	return m.Channel.ID
 }
 
 type ChannelData struct {
-	ID       string        `json:"id"`
+	ID       int           `json:"id"`
 	RoomType room.RoomType `json:"type"`
-	DmKey    string        `json:"-"`
 }

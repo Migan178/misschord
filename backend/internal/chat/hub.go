@@ -9,13 +9,13 @@ import (
 
 type joinOrLeaveData struct {
 	client *Client
-	roomID string
+	roomID int
 }
 
 type Hub struct {
 	clients        map[*Client]bool
 	authMiddleware *jwt.GinJWTMiddleware
-	rooms          map[string]map[*Client]bool
+	rooms          map[int]map[*Client]bool
 	register       chan *Client
 	unregister     chan *Client
 	join           chan joinOrLeaveData
@@ -25,18 +25,18 @@ type Hub struct {
 
 type broadcastData struct {
 	message *models.WebSocketData
-	roomID  string
+	roomID  int
 }
 
 type dataToBroadcast interface {
-	GetInternalRoomID() string
+	GetInternalRoomID() int
 }
 
 func NewHub(authMiddleware *jwt.GinJWTMiddleware) *Hub {
 	return &Hub{
 		clients:        make(map[*Client]bool),
 		authMiddleware: authMiddleware,
-		rooms:          make(map[string]map[*Client]bool),
+		rooms:          make(map[int]map[*Client]bool),
 		register:       make(chan *Client, 256),
 		unregister:     make(chan *Client, 256),
 		join:           make(chan joinOrLeaveData, 256),
@@ -75,7 +75,7 @@ func (h *Hub) Run() {
 		case data := <-h.leave:
 			if room, ok := h.rooms[data.roomID]; ok {
 				delete(room, data.client)
-				data.client.currentRoomID = ""
+				data.client.currentRoomID = 0
 
 				if len(room) == 0 {
 					delete(h.rooms, data.roomID)

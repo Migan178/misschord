@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 
 	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository/ent"
@@ -19,12 +17,10 @@ func newMessageRepository(client *ent.Client) *MessageRepository {
 }
 
 func (r *MessageRepository) Create(ctx context.Context, data models.MessageCreateEvent) (*ent.Message, error) {
-	channelID, _ := strconv.Atoi(data.Channel.ID)
-
 	return r.client.Message.Create().
 		SetAuthorID(data.Author.ID).
 		SetMessage(data.Message).
-		SetRoomID(channelID).
+		SetRoomID(data.Channel.ID).
 		Save(ctx)
 }
 
@@ -41,9 +37,8 @@ func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]
 
 	for _, message := range messages {
 		messagesToReturn = append(messagesToReturn, returnToMessageCreateEvent(message, models.ChannelData{
-			ID:       fmt.Sprintf("%d", message.RoomID),
+			ID:       message.RoomID,
 			RoomType: room.RoomTypeDM,
-			DmKey:    dmKey,
 		}))
 	}
 
@@ -51,9 +46,8 @@ func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]
 }
 
 func returnToMessageCreateEvent(message *ent.Message, channel models.ChannelData) *models.MessageCreateEvent {
-	id := fmt.Sprintf("%d", message.ID)
 	return &models.MessageCreateEvent{
-		ID:        &id,
+		ID:        &message.ID,
 		Author:    message.Edges.Author,
 		Message:   message.Message,
 		Channel:   channel,
