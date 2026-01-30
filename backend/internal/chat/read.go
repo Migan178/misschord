@@ -2,6 +2,7 @@ package chat
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
@@ -63,8 +64,13 @@ func (c *Client) readPump() {
 					c.parseDataAndSend(&models.WebSocketData{OP: &op}, err)
 
 					isUnauthorized := apiErr.Code == customErrors.ErrorCodeUnauthorized
+					if isUnauthorized {
+						return
+					}
+
 					isInternalErr := apiErr.Code == customErrors.ErrorCodeInternalError
-					if isUnauthorized || isInternalErr {
+					if isInternalErr {
+						fmt.Printf("internal err: %v\n", err)
 						return
 					}
 
@@ -80,8 +86,13 @@ func (c *Client) readPump() {
 					c.parseDataAndSend(&messageToSend, err)
 
 					isAuthorizationErr := apiErr.Code == customErrors.ErrorCodeAuthorizationError
+					if isAuthorizationErr {
+						return
+					}
+
 					isInternalErr := apiErr.Code == customErrors.ErrorCodeInternalError
-					if isAuthorizationErr || isInternalErr {
+					if isInternalErr {
+						fmt.Printf("internal err: %v\n", err)
 						return
 					}
 

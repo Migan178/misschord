@@ -10,7 +10,6 @@ import (
 	customErrors "github.com/Migan178/misschord-backend/internal/errors"
 	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository"
-	"github.com/Migan178/misschord-backend/internal/repository/ent"
 	jwt "github.com/appleboy/gin-jwt/v3"
 )
 
@@ -64,10 +63,13 @@ func (c *Client) handleIdentify(message *models.WebSocketData) error {
 
 	dbUser, err := repository.GetDatabase().Users.Get(ctx, id)
 	if err != nil {
-		if errors.As(err, new(*ent.NotFoundError)) {
-			return &customErrors.APIError{
-				Code:    customErrors.ErrorCodeNotfound,
-				Message: "user is not found",
+		var dbErr *repository.DatabaseError
+		if errors.As(err, &dbErr) {
+			if dbErr.Code == repository.ErrorCodeNotFound {
+				return &customErrors.APIError{
+					Code:    customErrors.ErrorCodeAuthorizationError,
+					Message: "user is not found",
+				}
 			}
 		}
 

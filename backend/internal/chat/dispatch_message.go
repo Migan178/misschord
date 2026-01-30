@@ -33,10 +33,13 @@ func (c *Client) handleMessageCreateEvent(message *models.WebSocketData) error {
 	case room.RoomTypeDM:
 		roomToSend, err = repository.GetDatabase().Rooms.GetDM(ctx, repository.GetDmID(c.user.ID, data.Channel.ID))
 		if err != nil {
-			if errors.Is(err, customErrors.ErrNoUser) {
-				return &customErrors.APIError{
-					Code:    customErrors.ErrorCodeNotfound,
-					Message: fmt.Sprintf("user %d is not found", data.ID),
+			var dbErr *repository.DatabaseError
+			if errors.As(err, &dbErr) {
+				if dbErr.Code == repository.ErrorCodeNotFound {
+					return &customErrors.APIError{
+						Code:    customErrors.ErrorCodeNotfound,
+						Message: fmt.Sprintf("user %d is not found", data.ID),
+					}
 				}
 			}
 
@@ -57,9 +60,14 @@ func (c *Client) handleMessageCreateEvent(message *models.WebSocketData) error {
 
 	createdMessage, err := repository.GetDatabase().Messages.Create(ctx, data)
 	if err != nil {
-		return &customErrors.APIError{
-			Code:    customErrors.ErrorCodeInternalError,
-			Message: customErrors.ErrorMessageInternalDBError,
+		var dbErr *repository.DatabaseError
+		if errors.As(err, &dbErr) {
+			if dbErr.Code == repository.ErrorCodeConstraint {
+				return &customErrors.APIError{
+					Code:    customErrors.ErrorCodeInvalidValue,
+					Message: customErrors.ErrorMessageConstraintErr,
+				}
+			}
 		}
 	}
 

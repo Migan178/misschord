@@ -43,10 +43,13 @@ func (c *Client) handleChannelEvent(message *models.WebSocketData) error {
 
 		room, err := repository.GetDatabase().Rooms.GetDM(ctx, repository.GetDmID(c.user.ID, data.ID))
 		if err != nil {
-			if errors.Is(err, customErrors.ErrNoUser) {
-				return &customErrors.APIError{
-					Code:    customErrors.ErrorCodeNotfound,
-					Message: fmt.Sprintf("user %d is not found", data.ID),
+			var dbErr *repository.DatabaseError
+			if errors.As(err, &dbErr) {
+				if dbErr.Code == repository.ErrorCodeNotFound {
+					return &customErrors.APIError{
+						Code:    customErrors.ErrorCodeNotfound,
+						Message: fmt.Sprintf("user %d is not found", data.ID),
+					}
 				}
 			}
 
