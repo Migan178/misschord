@@ -29,5 +29,6 @@ func (User) Fields() []ent.Field {
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("messages", Message.Type),
+		edge.To("rooms", Room.Type),
 	}
 }

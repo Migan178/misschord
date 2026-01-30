@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Migan178/misschord-backend/internal/repository/ent"
+	"github.com/Migan178/misschord-backend/internal/repository/ent/room"
 )
 
 type EventType string
@@ -14,14 +15,8 @@ const (
 	EventTypeChannelLeave  EventType = "CHANNEL_LEAVE"
 )
 
-type ChannelType string
-
-const (
-	ChannelTypeDM ChannelType = "DM"
-)
-
 type MessageCreateEvent struct {
-	ID        *int        `json:"id"`
+	ID        *string     `json:"id"`
 	Author    *ent.User   `json:"author"`
 	Message   string      `json:"message"`
 	Channel   ChannelData `json:"channel"`
@@ -29,11 +24,11 @@ type MessageCreateEvent struct {
 }
 
 func (m *MessageCreateEvent) GetInternalRoomID() string {
-	return m.Channel.InternalID
+	return m.Channel.DmKey
 }
 
 type ChannelData struct {
-	ID          string      `json:"id"`
-	ChannelType ChannelType `json:"type"`
-	InternalID  string      `json:"-"`
+	ID       string        `json:"id"`
+	RoomType room.RoomType `json:"type"`
+	DmKey    string        `json:"-"`
 }

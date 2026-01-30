@@ -5,6 +5,7 @@ import "fmt"
 var (
 	ErrDuplicatedUniqueValue       = fmt.Errorf("duplicated value")
 	ErrNoUser                      = fmt.Errorf("no user")
+	ErrNoChannel                   = fmt.Errorf("no channel")
 	ErrInternalServer              = fmt.Errorf("an error occurred")
 	ErrorMessageChannelIDIsInvalid = "channelId is invalid"
 	ErrFailedToSend                = fmt.Errorf("failed to send")

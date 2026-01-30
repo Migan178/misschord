@@ -37,3 +37,6 @@ internal/repository/ent/*
 
 # http request file
 *.http
+
+# debug binary
+__debug_bin*

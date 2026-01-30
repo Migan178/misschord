@@ -18,12 +18,8 @@ type Message struct {
 func (Message) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("author_id"),
+		field.Int("room_id"),
 		field.String("message"),
-		field.String("channel_id").
-			Immutable(),
-		field.Enum("channel_type").
-			Values("DM", "CHANNEL").
-			Immutable(),
 		field.Time("created_at").Default(time.Now),
 	}
 }
@@ -36,11 +32,16 @@ func (Message) Edges() []ent.Edge {
 			Unique().
 			Required().
 			Field("author_id"),
+		edge.From("room", Room.Type).
+			Ref("messages").
+			Unique().
+			Required().
+			Field("room_id"),
 	}
 }
 
 func (Message) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("channel_id"),
+		index.Fields("room_id"),
 	}
 }

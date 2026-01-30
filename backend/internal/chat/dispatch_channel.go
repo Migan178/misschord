@@ -12,15 +12,8 @@ import (
 	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository"
 	"github.com/Migan178/misschord-backend/internal/repository/ent"
+	"github.com/Migan178/misschord-backend/internal/repository/ent/room"
 )
-
-func getDmID(id1, id2 int) string {
-	if id1 < id2 {
-		return fmt.Sprintf("%d:%d", id1, id2)
-	}
-
-	return fmt.Sprintf("%d:%d", id2, id1)
-}
 
 func (c *Client) handleChannelEvent(message *models.WebSocketData) error {
 	var data models.ChannelData
@@ -36,7 +29,7 @@ func (c *Client) handleChannelEvent(message *models.WebSocketData) error {
 		}
 	}
 
-	if data.ChannelType == "" {
+	if data.RoomType == "" {
 		return &customErrors.APIError{
 			Code:    customErrors.ErrorCodeSyntaxError,
 			Message: customErrors.GetJSONTypeIsNullErrorMessage("type"),
@@ -53,8 +46,8 @@ func (c *Client) handleChannelEvent(message *models.WebSocketData) error {
 
 	var roomID string
 
-	switch data.ChannelType {
-	case models.ChannelTypeDM:
+	switch data.RoomType {
+	case room.RoomTypeDM:
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -73,11 +66,7 @@ func (c *Client) handleChannelEvent(message *models.WebSocketData) error {
 			}
 		}
 
-		if c.user.ID < targetUser.ID {
-			roomID = fmt.Sprintf("%d:%d", c.user.ID, targetUser.ID)
-		} else {
-			roomID = fmt.Sprintf("%d:%d", targetUser.ID, c.user.ID)
-		}
+		roomID = repository.GetDmID(c.user.ID, targetUser.ID)
 	}
 
 	switch message.Type {

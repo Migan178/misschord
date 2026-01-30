@@ -3,11 +3,13 @@ package chat
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	customErrors "github.com/Migan178/misschord-backend/internal/errors"
 	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository"
+	"github.com/Migan178/misschord-backend/internal/repository/ent/room"
 )
 
 func (c *Client) handleMessageCreateEvent(message *models.WebSocketData) error {
@@ -19,8 +21,8 @@ func (c *Client) handleMessageCreateEvent(message *models.WebSocketData) error {
 
 	data.Author = c.user
 
-	switch data.Channel.ChannelType {
-	case models.ChannelTypeDM:
+	switch data.Channel.RoomType {
+	case room.RoomTypeDM:
 		channelIDInt, err := strconv.Atoi(data.Channel.ID)
 		if err != nil {
 			return &customErrors.APIError{
@@ -28,10 +30,10 @@ func (c *Client) handleMessageCreateEvent(message *models.WebSocketData) error {
 				Message: "failed to convert to int",
 			}
 		}
-		data.Channel.InternalID = getDmID(c.user.ID, channelIDInt)
+		data.Channel.DmKey = repository.GetDmID(c.user.ID, channelIDInt)
 	}
 
-	if c.currentRoomID != data.Channel.InternalID {
+	if c.currentRoomID != data.Channel.DmKey {
 		return &customErrors.APIError{
 			Code:    customErrors.ErrorCodeNotfound,
 			Message: "user is not in the channel",
@@ -46,7 +48,8 @@ func (c *Client) handleMessageCreateEvent(message *models.WebSocketData) error {
 		}
 	}
 
-	data.ID = &createdMessage.ID
+	id := fmt.Sprintf("%d", createdMessage.ID)
+	data.ID = &id
 	data.CreatedAt = &createdMessage.CreatedAt
 
 	c.hub.parseDataAndBroadcast(message, &data)

@@ -33,7 +33,6 @@ func (r *UserRepository) Create(ctx context.Context, data models.CreateUserReque
 		Save(ctx)
 	if err != nil {
 		var mysqlErr *mysql.MySQLError
-
 		if errors.As(err, &mysqlErr) {
 			if mysqlErr.Number == 1062 {
 				return nil, customErrors.ErrDuplicatedUniqueValue
@@ -48,7 +47,7 @@ func (r *UserRepository) Create(ctx context.Context, data models.CreateUserReque
 func (r *UserRepository) Get(ctx context.Context, id int) (*ent.User, error) {
 	user, err := r.client.User.Get(ctx, id)
 	if err != nil {
-		if _, ok := err.(*ent.NotFoundError); ok {
+		if errors.As(err, new(*ent.NotFoundError)) {
 			return nil, customErrors.ErrNoUser
 		}
 

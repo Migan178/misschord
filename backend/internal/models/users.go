@@ -16,3 +16,7 @@ type UserToken struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
 }
+
+type CreateDMRequest struct {
+	RecipientID int `json:"recipient_id" binding:"required"`
+}

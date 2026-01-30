@@ -15,6 +15,7 @@ type Database struct {
 	client   *ent.Client
 	Users    *UserRepository
 	Messages *MessageRepository
+	Rooms    *RoomRepository
 }
 
 var instance *Database
@@ -42,6 +43,7 @@ func GetDatabase() *Database {
 			client:   client,
 			Users:    newUserRepository(client),
 			Messages: newMessageRepository(client),
+			Rooms:    newRoomRepository(client),
 		}
 	})
 

@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 
 	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository/ent"
-	"github.com/Migan178/misschord-backend/internal/repository/ent/message"
+	"github.com/Migan178/misschord-backend/internal/repository/ent/room"
 )
 
 type MessageRepository struct {
@@ -17,21 +19,19 @@ func newMessageRepository(client *ent.Client) *MessageRepository {
 }
 
 func (r *MessageRepository) Create(ctx context.Context, data models.MessageCreateEvent) (*ent.Message, error) {
+	channelID, _ := strconv.Atoi(data.Channel.ID)
+
 	return r.client.Message.Create().
 		SetAuthorID(data.Author.ID).
 		SetMessage(data.Message).
-		SetChannelID(data.Channel.InternalID).
-		SetChannelType(message.ChannelType(data.Channel.ChannelType)).
+		SetRoomID(channelID).
 		Save(ctx)
 }
 
-func (r *MessageRepository) GetMessagesByChannel(ctx context.Context, data models.ChannelData) ([]*models.MessageCreateEvent, error) {
-	messages, err := r.client.Message.Query().
-		Where(
-			message.ChannelID(data.InternalID),
-			message.ChannelTypeEQ(message.ChannelType(data.ChannelType)),
-		).
-		WithAuthor().
+func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]*models.MessageCreateEvent, error) {
+	messages, err := r.client.Room.Query().
+		Where(room.DmKey(dmKey)).
+		QueryMessages().
 		All(ctx)
 	if err != nil {
 		return make([]*models.MessageCreateEvent, 0), err
@@ -40,15 +40,20 @@ func (r *MessageRepository) GetMessagesByChannel(ctx context.Context, data model
 	var messagesToReturn []*models.MessageCreateEvent
 
 	for _, message := range messages {
-		messagesToReturn = append(messagesToReturn, returnToMessageCreateEvent(message, data))
+		messagesToReturn = append(messagesToReturn, returnToMessageCreateEvent(message, models.ChannelData{
+			ID:       fmt.Sprintf("%d", message.RoomID),
+			RoomType: room.RoomTypeDM,
+			DmKey:    dmKey,
+		}))
 	}
 
 	return messagesToReturn, nil
 }
 
 func returnToMessageCreateEvent(message *ent.Message, channel models.ChannelData) *models.MessageCreateEvent {
+	id := fmt.Sprintf("%d", message.ID)
 	return &models.MessageCreateEvent{
-		ID:        &message.ID,
+		ID:        &id,
 		Author:    message.Edges.Author,
 		Message:   message.Message,
 		Channel:   channel,
