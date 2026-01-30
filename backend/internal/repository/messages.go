@@ -17,11 +17,25 @@ func newMessageRepository(client *ent.Client) *MessageRepository {
 }
 
 func (r *MessageRepository) Create(ctx context.Context, data models.MessageCreateEvent) (*ent.Message, error) {
-	return r.client.Message.Create().
+	message, err := r.client.Message.Create().
 		SetAuthorID(data.Author.ID).
 		SetMessage(data.Message).
 		SetRoomID(data.Channel.ID).
 		Save(ctx)
+	if err != nil {
+		code := ErrorCodeOther
+
+		if ent.IsConstraintError(err) {
+			code = ErrorCodeConstraint
+		}
+
+		return nil, &DatabaseError{
+			Code:   code,
+			RawErr: err,
+		}
+	}
+
+	return message, nil
 }
 
 func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]*models.MessageCreateEvent, error) {
@@ -30,7 +44,16 @@ func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]
 		QueryMessages().
 		All(ctx)
 	if err != nil {
-		return make([]*models.MessageCreateEvent, 0), err
+		code := ErrorCodeOther
+
+		if ent.IsNotFound(err) {
+			code = ErrorCodeNotFound
+		}
+
+		return nil, &DatabaseError{
+			Code:   code,
+			RawErr: err,
+		}
 	}
 
 	var messagesToReturn []*models.MessageCreateEvent

@@ -13,6 +13,7 @@ var (
 	ErrorMessageInvalidSyntax      = "invalid syntax"
 	ErrorMessageInvalidToken       = "invalid token"
 	ErrorMessageInternalDBError    = "internal database error"
+	ErrorMessageConstraintErr      = "constraint violation"
 	ErrInvalidData                 = fmt.Errorf("invalid data")
 	ErrorMessageUnauthorized       = "unauthorized session"
 )
@@ -25,13 +26,15 @@ const (
 	ErrorCodeNotfound
 	ErrorCodeUnauthorized
 	ErrorCodeInvalidValue
+	ErrorCodeAuthenticationErr
 
 	ErrorCodeInternalError ErrorCode = 6000 + iota
 )
 
 type APIError struct {
-	Code    ErrorCode `json:"code"`
-	Message string    `json:"error"`
+	Code     ErrorCode         `json:"code"`
+	Message  string            `json:"error,omitempty"`
+	Messages map[string]string `json:"errors,omitempty"`
 }
 
 func (e *APIError) Error() string {

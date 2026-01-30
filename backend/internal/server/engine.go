@@ -35,6 +35,7 @@ func GetEngine() *gin.Engine {
 
 		instance.Use(cors.New(config))
 		instance.Use(middlewares.TimeoutMiddleWare(time.Second * 5))
+		instance.Use(middlewares.ErrorHandlerMiddleware())
 
 		routers.SetupRouter(instance, authMiddleware, hub)
 

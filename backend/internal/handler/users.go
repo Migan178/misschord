@@ -2,16 +2,13 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
-	customErrors "github.com/Migan178/misschord-backend/internal/errors"
 	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository"
 	jwt "github.com/appleboy/gin-jwt/v3"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
@@ -19,32 +16,13 @@ func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
 		var createData models.CreateUserRequest
 
 		if err := c.ShouldBindJSON(&createData); err != nil {
-			var validateErr validator.ValidationErrors
-			if errors.As(err, &validateErr) {
-				msgs := make(map[string]string)
-
-				for _, err := range validateErr {
-					msgs[err.Field()] = customErrors.GetErrorMessage(err)
-				}
-
-				c.JSON(http.StatusBadRequest, gin.H{"errors": msgs})
-				return
-			}
-
-			fmt.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "an error occurred"})
+			c.Error(err)
 			return
 		}
 
 		user, err := repository.GetDatabase().Users.Create(c.Request.Context(), createData)
 		if err != nil {
-			if err == customErrors.ErrDuplicatedUniqueValue {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-
-			fmt.Println(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "an error occurred"})
+			c.Error(err)
 			return
 		}
 
@@ -53,7 +31,7 @@ func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
 			Email: user.Email,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "an error occurred in generating token. but user is created."})
+			c.Error(err)
 			return
 		}
 
@@ -75,17 +53,8 @@ func CreateDM(c *gin.Context) {
 	var createData models.CreateDMRequest
 
 	if err := c.ShouldBindJSON(&createData); err != nil {
-		var validateErr validator.ValidationErrors
-		if errors.As(err, &validateErr) {
-			msgs := make(map[string]string)
-
-			for _, err := range validateErr {
-				msgs[err.Field()] = customErrors.GetErrorMessage(err)
-			}
-
-			c.JSON(http.StatusBadRequest, gin.H{"errors": msgs})
-			return
-		}
+		c.Error(err)
+		return
 	}
 
 	room, err := repository.GetDatabase().Rooms.CreateDM(c.Request.Context(), userID, createData.RecipientID)
@@ -94,23 +63,22 @@ func CreateDM(c *gin.Context) {
 		return
 	}
 
-	if !errors.Is(err, customErrors.ErrDuplicatedUniqueValue) {
-		fmt.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "an error occurred",
-		})
+	var dbErr *repository.DatabaseError
+	if !errors.As(err, &dbErr) {
+		c.Error(err)
+		return
+	}
+
+	if dbErr.Code != repository.ErrorCodeNotFound {
+		c.Error(err)
 		return
 	}
 
 	dmKey := repository.GetDmID(userID, createData.RecipientID)
 	room, err = repository.GetDatabase().Rooms.GetDM(c.Request.Context(), dmKey)
 	if err != nil {
-		if errors.Is(err, customErrors.ErrNoUser) {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
+		c.Error(err)
+		return
 	}
 
 	c.JSON(http.StatusOK, room)
@@ -119,25 +87,13 @@ func CreateDM(c *gin.Context) {
 func GetUser(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "id is not valid",
-		})
+		c.Error(err)
 		return
 	}
 
 	user, err := repository.GetDatabase().Users.Get(c.Request.Context(), id)
 	if err != nil {
-		if err == customErrors.ErrNoUser {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
-		fmt.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "an error occurred",
-		})
+		c.Error(err)
 		return
 	}
 
@@ -149,17 +105,7 @@ func Me(c *gin.Context) {
 
 	user, err := repository.GetDatabase().Users.Get(c.Request.Context(), userID)
 	if err != nil {
-		if err == customErrors.ErrNoUser {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
-		fmt.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "an error occurred",
-		})
+		c.Error(err)
 		return
 	}
 
