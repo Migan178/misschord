@@ -1,3 +1,4 @@
+import api from "../api/axios";
 import { useSocket } from "../contexts/socket";
 import { OPCode } from "../models/websocket/data";
 import {
@@ -12,7 +13,7 @@ export default function Root() {
 	const { sendMessage, lastMessage, connectionStatus } = useSocket();
 
 	const [messages, setMessages] = useState<string[]>([]);
-	const [channel, setChannel] = useState("");
+	const [channel, setChannel] = useState(0);
 
 	function handleSendMessage(data: FormData) {
 		sendMessage(
@@ -30,8 +31,10 @@ export default function Root() {
 		);
 	}
 
-	function handleSetChannel(data: FormData) {
-		if (channel)
+	async function handleSetChannel(data: FormData) {
+		if (!data.get("id")) return;
+
+		if (channel > 0)
 			sendMessage(
 				JSON.stringify({
 					op: OPCode.Dispatch,
@@ -43,18 +46,26 @@ export default function Root() {
 				}),
 			);
 
-		setChannel(data.get("id")!.toString());
+		setChannel(Number(data.get("id")?.toString()));
 
-		sendMessage(
-			JSON.stringify({
-				op: OPCode.Dispatch,
-				data: {
-					id: channel,
-					type: ChannelType.DM,
-				},
-				type: EventType.ChannelJoin,
-			}),
-		);
+		try {
+			await api.post("/users/me/channels", {
+				recipient_id: channel,
+			});
+
+			sendMessage(
+				JSON.stringify({
+					op: OPCode.Dispatch,
+					data: {
+						id: channel,
+						type: ChannelType.DM,
+					},
+					type: EventType.ChannelJoin,
+				}),
+			);
+		} catch (err) {
+			console.error(err);
+		}
 	}
 
 	useEffect(() => {
