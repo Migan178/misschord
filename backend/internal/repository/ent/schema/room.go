@@ -21,7 +21,8 @@ func (Room) Fields() []ent.Field {
 		field.String("dm_key").
 			Optional().
 			Nillable().
-			Unique(),
+			Unique().
+			Sensitive(),
 		field.Time("created_at").Default(time.Now),
 	}
 }

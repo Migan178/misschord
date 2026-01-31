@@ -48,7 +48,7 @@ func (r *RoomRepository) CreateDM(ctx context.Context, userID, recipientID int) 
 }
 
 func (r *RoomRepository) GetDM(ctx context.Context, dmKey string) (*ent.Room, error) {
-	channel, err := r.client.Room.Query().
+	room, err := r.client.Room.Query().
 		Where(room.DmKey(dmKey)).
 		Only(ctx)
 	if err != nil {
@@ -64,5 +64,23 @@ func (r *RoomRepository) GetDM(ctx context.Context, dmKey string) (*ent.Room, er
 		}
 	}
 
-	return channel, nil
+	return room, nil
+}
+
+func (r *RoomRepository) GetRoom(ctx context.Context, id int) (*ent.Room, error) {
+	room, err := r.client.Room.Get(ctx, id)
+	if err != nil {
+		code := ErrorCodeOther
+
+		if ent.IsNotFound(err) {
+			code = ErrorCodeAuthenticationFailed
+		}
+
+		return nil, &DatabaseError{
+			Code:   code,
+			RawErr: err,
+		}
+	}
+
+	return room, nil
 }

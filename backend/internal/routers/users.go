@@ -21,6 +21,7 @@ func setupUsers(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 		private.GET("/:id", handler.GetUser)
 
 		private.POST("/logout", authMiddleware.LogoutHandler)
-		private.POST("/me/channels", handler.CreateDM)
 	}
+
+	setChannels(rg.Group("/users/me"), authMiddleware)
 }

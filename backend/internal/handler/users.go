@@ -47,43 +47,6 @@ func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
 	}
 }
 
-func CreateDM(c *gin.Context) {
-	userID, _ := strconv.Atoi(jwt.ExtractClaims(c)["id"].(string))
-
-	var createData models.CreateDMRequest
-
-	if err := c.ShouldBindJSON(&createData); err != nil {
-		c.Error(err)
-		return
-	}
-
-	room, err := repository.GetDatabase().Rooms.CreateDM(c.Request.Context(), userID, createData.RecipientID)
-	if err == nil {
-		c.JSON(http.StatusCreated, room)
-		return
-	}
-
-	var dbErr *repository.DatabaseError
-	if !errors.As(err, &dbErr) {
-		c.Error(err)
-		return
-	}
-
-	if dbErr.Code != repository.ErrorCodeNotFound {
-		c.Error(err)
-		return
-	}
-
-	dmKey := repository.GetDmID(userID, createData.RecipientID)
-	room, err = repository.GetDatabase().Rooms.GetDM(c.Request.Context(), dmKey)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
-	c.JSON(http.StatusCreated, room)
-}
-
 func GetUser(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

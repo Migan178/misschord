@@ -13,6 +13,7 @@ func SetupRouter(app *gin.Engine, authMiddleware *jwt.GinJWTMiddleware, hub *cha
 		v1.GET("/ws", func(c *gin.Context) {
 			handler.ServeWS(hub, authMiddleware, c.Writer, c.Request)
 		})
+
 		setupUsers(v1, authMiddleware)
 	}
 }
