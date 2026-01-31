@@ -59,7 +59,7 @@ func CreateDM(c *gin.Context) {
 
 	room, err := repository.GetDatabase().Rooms.CreateDM(c.Request.Context(), userID, createData.RecipientID)
 	if err == nil {
-		c.JSON(http.StatusOK, room)
+		c.JSON(http.StatusCreated, room)
 		return
 	}
 
@@ -81,7 +81,7 @@ func CreateDM(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, room)
+	c.JSON(http.StatusCreated, room)
 }
 
 func GetUser(c *gin.Context) {
