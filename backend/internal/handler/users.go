@@ -105,6 +105,13 @@ func Me(c *gin.Context) {
 
 	user, err := repository.GetDatabase().Users.Get(c.Request.Context(), userID)
 	if err != nil {
+		var dbErr *repository.DatabaseError
+		if errors.As(err, &dbErr) {
+			dbErr.Code = repository.ErrorCodeAuthenticationFailed
+			c.Error(dbErr)
+			return
+		}
+
 		c.Error(err)
 		return
 	}
