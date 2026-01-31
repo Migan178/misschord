@@ -85,7 +85,7 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 
 		fmt.Printf("unexpected err: %v\n", err)
 		c.JSON(http.StatusInternalServerError, customErrors.APIError{
-			Code:    customErrors.ErrorCodeAuthorizationError,
+			Code:    customErrors.ErrorCodeInternalError,
 			Message: "an error occurred",
 		})
 	}

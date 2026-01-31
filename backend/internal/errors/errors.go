@@ -3,18 +3,15 @@ package errors
 import "fmt"
 
 var (
-	ErrDuplicatedUniqueValue       = fmt.Errorf("duplicated value")
-	ErrNoUser                      = fmt.Errorf("no user")
-	ErrNoChannel                   = fmt.Errorf("no channel")
-	ErrInternalServer              = fmt.Errorf("an error occurred")
+	ErrInternalServer = fmt.Errorf("an error occurred")
+	ErrFailedToSend   = fmt.Errorf("failed to send")
+
 	ErrorMessageChannelIDIsInvalid = "channelId is invalid"
-	ErrFailedToSend                = fmt.Errorf("failed to send")
 	ErrorMessageAlreadyIdentified  = "already identified"
 	ErrorMessageInvalidSyntax      = "invalid syntax"
 	ErrorMessageInvalidToken       = "invalid token"
 	ErrorMessageInternalDBError    = "internal database error"
 	ErrorMessageConstraintErr      = "constraint violation"
-	ErrInvalidData                 = fmt.Errorf("invalid data")
 	ErrorMessageUnauthorized       = "unauthorized session"
 )
 

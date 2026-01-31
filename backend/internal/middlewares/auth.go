@@ -1,13 +1,14 @@
 package middlewares
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/Migan178/misschord-backend/internal/configs"
-	"github.com/Migan178/misschord-backend/internal/errors"
+	customErrors "github.com/Migan178/misschord-backend/internal/errors"
 	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository"
 	ginJWT "github.com/appleboy/gin-jwt/v3"
@@ -65,7 +66,15 @@ func authenticator(c *gin.Context) (any, error) {
 
 	user, err := repository.GetDatabase().Users.GetByEmail(c.Request.Context(), loginData.Email)
 	if err != nil {
-		return nil, err
+		var dbErr *repository.DatabaseError
+		if errors.As(err, &dbErr) {
+			if dbErr.Code == repository.ErrorCodeAuthenticationFailed {
+				return nil, ginJWT.ErrFailedAuthentication
+			}
+		}
+
+		fmt.Printf("database err: %v\n", err)
+		return nil, customErrors.ErrInternalServer
 	}
 
 	ok, err := repository.CheckPassword(loginData.Password, user.HashedPassword)
@@ -102,20 +111,16 @@ func authorizer(c *gin.Context, data any) bool {
 }
 
 func unauthorized(c *gin.Context, code int, message string) {
-	fmt.Println(message)
-
-	if message == ginJWT.ErrEmptyAuthHeader.Error() || message == ginJWT.ErrEmptyCookieToken.Error() {
-		c.JSON(code, gin.H{
-			"error": "token is invalid",
+	if message == customErrors.ErrInternalServer.Error() {
+		c.JSON(http.StatusInternalServerError, customErrors.APIError{
+			Code:    customErrors.ErrorCodeInternalError,
+			Message: "an error occurred",
 		})
 		return
 	}
 
-	if message == errors.ErrInternalServer.Error() {
-		code = http.StatusInternalServerError
-	}
-
-	c.JSON(code, gin.H{
-		"error": message,
+	c.JSON(code, customErrors.APIError{
+		Code:    customErrors.ErrorCodeAuthorizationError,
+		Message: message,
 	})
 }

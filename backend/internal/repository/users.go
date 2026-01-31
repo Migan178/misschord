@@ -49,7 +49,7 @@ func (r *UserRepository) Get(ctx context.Context, id int) (*ent.User, error) {
 		code := ErrorCodeOther
 
 		if ent.IsNotFound(err) {
-			code = ErrorCodeAuthenticationFailed
+			code = ErrorCodeNotFound
 		}
 
 		return nil, &DatabaseError{
@@ -69,7 +69,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*ent.Use
 		code := ErrorCodeOther
 
 		if ent.IsNotFound(err) {
-			code = ErrorCodeNotFound
+			code = ErrorCodeAuthenticationFailed
 		}
 
 		return nil, &DatabaseError{
