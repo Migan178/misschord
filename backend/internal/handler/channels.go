@@ -57,7 +57,7 @@ func CreateChannel(c *gin.Context) {
 func GetChannel(c *gin.Context) {
 	path := c.Request.URL.Path
 	userID, _ := strconv.Atoi(jwt.ExtractClaims(c)["id"].(string))
-	channelID, err := strconv.Atoi(c.Param("id"))
+	channelID, err := strconv.Atoi(c.Param("channelID"))
 	if err != nil {
 		c.Error(err)
 		return

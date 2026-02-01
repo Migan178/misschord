@@ -19,6 +19,8 @@ func setChannels(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 				handler.CreateChannel(c)
 			}
 		})
-		channels.GET("/:id", handler.GetChannel)
+		channels.GET("/:channelID", handler.GetChannel)
 	}
+
+	setupMessages(rg.Group("/channels/:channelID"), authMiddleware)
 }

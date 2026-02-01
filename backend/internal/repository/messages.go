@@ -42,6 +42,7 @@ func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]
 	messages, err := r.client.Room.Query().
 		Where(room.DmKey(dmKey)).
 		QueryMessages().
+		WithAuthor().
 		All(ctx)
 	if err != nil {
 		code := ErrorCodeOther
