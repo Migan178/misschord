@@ -9,7 +9,7 @@ import (
 func setupUsers(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 	public := rg.Group("/users")
 	{
-		public.POST("/", handler.CreateUser(authMiddleware))
+		public.POST("/", handler.HandleCreateUser(authMiddleware))
 		public.POST("/login", authMiddleware.LoginHandler)
 		public.POST("/refresh", authMiddleware.RefreshHandler)
 	}
@@ -17,8 +17,8 @@ func setupUsers(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 	private := rg.Group("/users")
 	private.Use(authMiddleware.MiddlewareFunc())
 	{
-		private.GET("/me", handler.Me)
-		private.GET("/:id", handler.GetUser)
+		private.GET("/me", handler.HandleMe)
+		private.GET("/:id", handler.HandleGetUser)
 
 		private.POST("/logout", authMiddleware.LogoutHandler)
 	}

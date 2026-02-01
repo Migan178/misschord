@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateDM(c *gin.Context) {
+func HandleCreateDM(c *gin.Context) {
 	userID, _ := strconv.Atoi(jwt.ExtractClaims(c)["id"].(string))
 
 	var createData models.CreateDMRequest
@@ -50,11 +50,11 @@ func CreateDM(c *gin.Context) {
 	c.JSON(http.StatusCreated, room)
 }
 
-func CreateChannel(c *gin.Context) {
+func HandleCreateChannel(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"message": "wip"})
 }
 
-func GetChannel(c *gin.Context) {
+func HandleGetChannel(c *gin.Context) {
 	path := c.Request.URL.Path
 	userID, _ := strconv.Atoi(jwt.ExtractClaims(c)["id"].(string))
 	channelID, err := strconv.Atoi(c.Param("channelID"))

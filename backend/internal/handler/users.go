@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
+func HandleCreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var createData models.CreateUserRequest
 
@@ -47,7 +47,7 @@ func CreateUser(authMiddleware *jwt.GinJWTMiddleware) func(c *gin.Context) {
 	}
 }
 
-func GetUser(c *gin.Context) {
+func HandleGetUser(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.Error(err)
@@ -63,7 +63,7 @@ func GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func Me(c *gin.Context) {
+func HandleMe(c *gin.Context) {
 	userID, _ := strconv.Atoi(jwt.ExtractClaims(c)["id"].(string))
 
 	user, err := repository.GetDatabase().Users.Get(c.Request.Context(), userID)
@@ -82,6 +82,6 @@ func Me(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func UpdateUser(c *gin.Context) {}
+func HandleUpdateUser(c *gin.Context) {}
 
-func DeleteUser(c *gin.Context) {}
+func HandleDeleteUser(c *gin.Context) {}

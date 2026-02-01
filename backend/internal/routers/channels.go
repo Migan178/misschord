@@ -14,12 +14,12 @@ func setChannels(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 	{
 		channels.POST("/", func(c *gin.Context) {
 			if strings.Contains(c.Request.URL.Path, "/users/me") {
-				handler.CreateDM(c)
+				handler.HandleCreateDM(c)
 			} else {
-				handler.CreateChannel(c)
+				handler.HandleCreateChannel(c)
 			}
 		})
-		channels.GET("/:channelID", handler.GetChannel)
+		channels.GET("/:channelID", handler.HandleGetChannel)
 	}
 
 	setupMessages(rg.Group("/channels/:channelID"), authMiddleware)
