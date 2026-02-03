@@ -5,6 +5,7 @@ import (
 
 	"github.com/Migan178/misschord-backend/internal/models"
 	"github.com/Migan178/misschord-backend/internal/repository/ent"
+	"github.com/Migan178/misschord-backend/internal/repository/ent/message"
 	"github.com/Migan178/misschord-backend/internal/repository/ent/room"
 )
 
@@ -16,9 +17,9 @@ func newMessageRepository(client *ent.Client) *MessageRepository {
 	return &MessageRepository{client}
 }
 
-func (r *MessageRepository) Create(ctx context.Context, data models.MessageCreateEvent) (*ent.Message, error) {
-	message, err := r.client.Message.Create().
-		SetAuthorID(data.Author.ID).
+func (r *MessageRepository) Create(ctx context.Context, authorID int, data models.MessageCreateData) (*models.MessageResponse, error) {
+	createdMessage, err := r.client.Message.Create().
+		SetAuthorID(authorID).
 		SetMessage(data.Message).
 		SetRoomID(data.Channel.ID).
 		Save(ctx)
@@ -35,10 +36,21 @@ func (r *MessageRepository) Create(ctx context.Context, data models.MessageCreat
 		}
 	}
 
-	return message, nil
+	createdMessage, err = r.client.Message.Query().
+		Where(message.ID(createdMessage.ID)).
+		WithAuthor().
+		Only(ctx)
+	if err != nil {
+		return nil, &DatabaseError{
+			Code:   ErrorCodeOther,
+			RawErr: err,
+		}
+	}
+
+	return returnToMessageCreateEvent(createdMessage, *data.Channel), nil
 }
 
-func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]*models.MessageCreateEvent, error) {
+func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]*models.MessageResponse, error) {
 	messages, err := r.client.Room.Query().
 		Where(room.DmKey(dmKey)).
 		QueryMessages().
@@ -57,7 +69,7 @@ func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]
 		}
 	}
 
-	var messagesToReturn []*models.MessageCreateEvent
+	var messagesToReturn []*models.MessageResponse
 
 	for _, message := range messages {
 		messagesToReturn = append(messagesToReturn, returnToMessageCreateEvent(message, models.ChannelData{
@@ -69,12 +81,12 @@ func (r *MessageRepository) GetDmMessages(ctx context.Context, dmKey string) ([]
 	return messagesToReturn, nil
 }
 
-func returnToMessageCreateEvent(message *ent.Message, channel models.ChannelData) *models.MessageCreateEvent {
-	return &models.MessageCreateEvent{
-		ID:        &message.ID,
+func returnToMessageCreateEvent(message *ent.Message, channel models.ChannelData) *models.MessageResponse {
+	return &models.MessageResponse{
+		ID:        message.ID,
 		Author:    message.Edges.Author,
 		Message:   message.Message,
 		Channel:   channel,
-		CreatedAt: &message.CreatedAt,
+		CreatedAt: message.CreatedAt,
 	}
 }

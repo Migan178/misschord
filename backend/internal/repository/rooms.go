@@ -32,7 +32,7 @@ func (r *RoomRepository) CreateDM(ctx context.Context, userID, recipientID int) 
 		Save(ctx)
 
 	if err != nil {
-		code := ErrorCodeNotFound
+		code := ErrorCodeOther
 
 		if ent.IsConstraintError(err) {
 			code = ErrorCodeConstraint

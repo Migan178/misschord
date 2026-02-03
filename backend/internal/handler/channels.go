@@ -35,7 +35,7 @@ func HandleCreateDM(c *gin.Context) {
 		return
 	}
 
-	if dbErr.Code != repository.ErrorCodeNotFound {
+	if dbErr.Code != repository.ErrorCodeConstraint {
 		c.Error(err)
 		return
 	}

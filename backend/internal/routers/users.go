@@ -1,15 +1,16 @@
 package routers
 
 import (
+	"github.com/Migan178/misschord-backend/internal/chat"
 	"github.com/Migan178/misschord-backend/internal/handler"
 	jwt "github.com/appleboy/gin-jwt/v3"
 	"github.com/gin-gonic/gin"
 )
 
-func setupUsers(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
+func setupUsers(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware, hub *chat.Hub) {
 	public := rg.Group("/users")
 	{
-		public.POST("/", handler.HandleCreateUser(authMiddleware))
+		public.POST("", handler.HandleCreateUser(authMiddleware))
 		public.POST("/login", authMiddleware.LoginHandler)
 		public.POST("/refresh", authMiddleware.RefreshHandler)
 	}
@@ -23,5 +24,5 @@ func setupUsers(rg *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 		private.POST("/logout", authMiddleware.LogoutHandler)
 	}
 
-	setChannels(rg.Group("/users/me"), authMiddleware)
+	setChannels(rg.Group("/users/me"), authMiddleware, hub)
 }

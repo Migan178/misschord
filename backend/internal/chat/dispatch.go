@@ -28,8 +28,6 @@ func (c *Client) handleDispatch(message *models.WebSocketData) error {
 	}
 
 	switch message.Type {
-	case models.EventTypeMessageCreate:
-		return c.handleMessageCreateEvent(message)
 	case models.EventTypeChannelJoin, models.EventTypeChannelLeave:
 		return c.handleChannelEvent(message)
 	default:

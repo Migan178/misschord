@@ -85,7 +85,7 @@ func (h *Hub) Run() {
 	}
 }
 
-func (h *Hub) parseDataAndBroadcast(message *models.WebSocketData, data dataToBroadcast) {
+func (h *Hub) ParseDataAndBroadcast(message *models.WebSocketData, data dataToBroadcast) {
 	dataByte, err := json.Marshal(data)
 	if err != nil {
 		return

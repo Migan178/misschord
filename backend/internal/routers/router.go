@@ -14,6 +14,6 @@ func SetupRouter(app *gin.Engine, authMiddleware *jwt.GinJWTMiddleware, hub *cha
 			handler.ServeWS(hub, authMiddleware, c.Writer, c.Request)
 		})
 
-		setupUsers(v1, authMiddleware)
+		setupUsers(v1, authMiddleware, hub)
 	}
 }
