@@ -1,12 +1,5 @@
 export interface ErrorResponse {
-	error: string;
-}
-
-export interface ErrorsResponse {
-	errors: string[];
-}
-
-export interface WebsocketErrorData {
-	error: string;
+	error?: string;
+	errors?: string[];
 	code: number;
 }

@@ -1,5 +1,6 @@
 import api from "../api/axios";
 import { useSocket } from "../contexts/socket";
+import type { MessageResponse } from "../models/message";
 import { OPCode } from "../models/websocket/data";
 import {
 	ChannelType,
@@ -15,20 +16,14 @@ export default function Root() {
 	const [messages, setMessages] = useState<string[]>([]);
 	const [channel, setChannel] = useState(0);
 
-	function handleSendMessage(data: FormData) {
-		sendMessage(
-			JSON.stringify({
-				op: OPCode.Dispatch,
-				data: {
-					message: data.get("text"),
-					channel: {
-						id: channel,
-						type: "DM",
-					},
-				},
-				type: EventType.MessageCreate,
-			}),
-		);
+	async function handleSendMessage(data: FormData) {
+		try {
+			await api.post(`/users/me/channels/${channel}/messages`, {
+				message: data.get("text"),
+			});
+		} catch (err) {
+			console.error(err);
+		}
 	}
 
 	async function handleSetChannel(data: FormData) {
@@ -63,6 +58,17 @@ export default function Root() {
 					type: EventType.ChannelJoin,
 				}),
 			);
+
+			const res = await api.get<MessageResponse[]>(
+				`/users/me/channels/${channel}/messages`,
+			);
+
+			for (const data of res.data) {
+				setMessages(prev => [
+					...prev,
+					`${data.author.handle}: ${data.message}`,
+				]);
+			}
 		} catch (err) {
 			console.error(err);
 		}

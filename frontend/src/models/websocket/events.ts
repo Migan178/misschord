@@ -1,4 +1,4 @@
-import type { UserResponse } from "../user";
+import type { MessageResponse } from "../message";
 import { OPCode, type WebsocketData } from "./data";
 
 export const EventType = {
@@ -13,19 +13,12 @@ export const ChannelType = {
 } as const;
 export type ChannelType = (typeof ChannelType)[keyof typeof ChannelType];
 
-export interface MessageCreateEvent {
-	author: UserResponse;
-	message: string;
-	channelType: ChannelType;
-	createdAt: string;
-}
-
 export interface WebsocketDispatchData extends WebsocketData {
 	op: 0;
 }
 
 export interface WebsocketMessageCreateData extends WebsocketDispatchData {
-	data: MessageCreateEvent;
+	data: MessageResponse;
 }
 
 export function isMessageCreate(
