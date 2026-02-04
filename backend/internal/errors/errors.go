@@ -24,7 +24,9 @@ const (
 	ErrorCodeUnauthorized
 	ErrorCodeInvalidValue
 	ErrorCodeAuthenticationErr
+)
 
+const (
 	ErrorCodeInternalError ErrorCode = 6000 + iota
 )
 
